@@ -1,0 +1,46 @@
+- uma plataforma de matemática gamificada, sem firulas. É escolher o que resolver e meter a cara.
+- não tem tutorial. O usuário que se vire.
+- as questões são de múltipla escolha(5 alternativas), o usuário não é obrigado a enviar a foto nem a digitar a questão.
+- mas se não enviar ou digitar, ganhará apenas 30% do exp.
+- não terá vidas/energia. não haverá penalidade por erro.
+- não deve ter adição, soma, subtração nem multiplicação. deve partir de algo acima disso.
+- a ideia é incentivar o manuscrito e a competitividade.
+- é papel e caneta(ou touch) e questões. O sistema não ensina, apenas a IA pode dar algum feedback.
+- deve der opções como (Aritmética, Álgebra, Geometria, Trigonometria)(cards).
+- dentro dessas opções pode ter subdivisões com bancos de questões.
+- cada questão terá um nome, ao abrir, terá uma descrição e pode conter imagens.
+- mesmo que o usuário seja experiente, resolver as questões básicas lhe darão um EXP extra.
+- as questões devem ter um peso de experiência, um nível de dificuldade.
+- deve ter um local com as informações do usuário(tempo gasto, disciplina que mais joga, seu EXP).
+- usuário poderá responder as questões na lousa(touch screen ou mesa digitalizadora).
+- depois que o usuário submeter a questão a api do google deve receber a foto do manuscrito da questão.
+- IA corrige e retorna se está certo ou errado.
+- IA atua como um "auditor" da resolução, não apenas do resultado final.
+
+
+Melhorar a Definição de "Competitividade"
+    Você disse que quer algo competitivo, mas removeu penalidades (vidas) e tutoriais. Onde está a competição?
+
+    O que falta: Para ser competitivo, o usuário precisa se comparar com alguém.
+
+    Terá um Ranking (Leaderboard)? (Global, Semanal, ou entre Amigos?)
+
+    Terá Ligas? (Bronze, Prata, Ouro baseadas no XP semanal?)
+
+Mecânica de Ranking:
+
+Adição: "Haverá um Ranking Semanal que reseta todo domingo à noite. Os Top 3 ganham uma insígnia no perfil."
+
+Fluxo de Correção da IA (Regra de Ouro):
+
+Regra: "Se o usuário marcar a alternativa Correta MAS a IA julgar que o manuscrito é inválido/incompleto, o usuário ganha os 30% ou 0%? Ou o sistema pede para reenviar?" (Eu sugiro dar os 30% e avisar: 'Cálculo ilegível, bônus anulado').
+
+Tecnologia da "Lousa":
+
+Front-end: Você usará um <canvas> do HTML5 ou uma biblioteca pronta (como react-canvas-draw)? Isso muda a complexidade do React.
+
+Feedback da IA:
+
+Você disse que o sistema não ensina, mas a IA pode dar feedback.
+
+Definição: O feedback é automático? Ou o usuário tem que clicar em "Por que errei?" (Isso economiza chamadas de API).
