@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Home } from './components/Home';
 import { CategoryView } from './components/CategoryView';
 import { QuestionView } from './components/QuestionView';
@@ -9,6 +9,7 @@ import { PublicProfileView } from './components/PublicProfileView';
 import { AchievementsView } from './components/AchievementsView';
 import { FriendsView } from './components/FriendsView';
 import { AuthView } from './components/AuthView';
+import { apiService } from './services/api';
 
 export type Category = {
   id: string;
@@ -81,43 +82,78 @@ export type Screen =
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [screen, setScreen] = useState<Screen>({ type: 'home' });
+  const [loading, setLoading] = useState(false);
   const [userProfile, setUserProfile] = useState<UserProfile>({
-    username: 'Jogador',
-    totalXP: 1250,
-    level: 8,
-    timeSpent: 345,
-    questionsCompleted: 42,
-    favoriteCategory: 'Álgebra',
-    weeklyXP: 380,
-    badges: ['🥉'],
-    achievements: [
-      {
-        id: 'first-win',
-        name: 'Primeira Vitória',
-        description: 'Complete sua primeira questão',
-        icon: '🎯',
-        unlockedAt: '2025-12-01'
-      },
-      {
-        id: 'manuscript-master',
-        name: 'Mestre do Manuscrito',
-        description: 'Valide 10 resoluções manuscritas',
-        icon: '✍️',
-        unlockedAt: '2025-12-05'
-      }
-    ],
-    categoryStats: [
-      { categoryId: 'algebra', categoryName: 'Álgebra', questionsCompleted: 18, xpEarned: 650 },
-      { categoryId: 'geometria', categoryName: 'Geometria', questionsCompleted: 12, xpEarned: 380 },
-      { categoryId: 'trigonometria', categoryName: 'Trigonometria', questionsCompleted: 8, xpEarned: 150 },
-      { categoryId: 'aritmetica', categoryName: 'Aritmética', questionsCompleted: 4, xpEarned: 70 }
-    ],
-    joinedDate: '2025-11-15'
+    username: 'Indisponível',
+    totalXP: 0,
+    level: 0,
+    timeSpent: 0,
+    questionsCompleted: 0,
+    favoriteCategory: 'Indisponível',
+    weeklyXP: 0,
+    badges: [],
+    achievements: [],
+    categoryStats: [],
+    joinedDate: new Date().toISOString().split('T')[0]
   });
+
+  // Carregar dados do usuário após autenticação
+  useEffect(() => {
+    if (isAuthenticated) {
+      loadUserData();
+    }
+  }, [isAuthenticated]);
+
+  const loadUserData = async () => {
+    setLoading(true);
+    try {
+      // Buscar dados do usuário
+      const user = await apiService.getCurrentUser();
+      const stats = await apiService.getCurrentUserStats();
+
+      if (user && stats) {
+        // Encontrar categoria com mais XP
+        let favoriteCategory = 'Indisponível';
+        if (stats.categories_stats && Object.keys(stats.categories_stats).length > 0) {
+          const categories = Object.entries(stats.categories_stats);
+          if (categories.length > 0) {
+            const topCategory = categories.reduce((prev, current) => {
+              const prevXp = (prev[1] as any)?.xp_earned || 0;
+              const currentXp = (current[1] as any)?.xp_earned || 0;
+              return currentXp > prevXp ? current : prev;
+            });
+            favoriteCategory = topCategory[0];
+          }
+        }
+
+        setUserProfile({
+          username: user.name || 'Indisponível',
+          totalXP: stats.total_xp || 0,
+          level: stats.level || 0,
+          timeSpent: stats.time_spent_minutes || 0,
+          questionsCompleted: stats.submissions_count || 0,
+          favoriteCategory: favoriteCategory,
+          weeklyXP: stats.xp || 0, // XP da semana (xp current)
+          badges: [],
+          achievements: [],
+          categoryStats: Object.entries(stats.categories_stats || {}).map(([name, data]: any) => ({
+            categoryId: name.toLowerCase(),
+            categoryName: name,
+            questionsCompleted: data.submissions || 0,
+            xpEarned: data.xp_earned || 0
+          })),
+          joinedDate: user.created_at?.split('T')[0] || new Date().toISOString().split('T')[0]
+        });
+      }
+    } catch (error) {
+      console.error('Erro ao carregar dados do usuário:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleLogin = (username: string) => {
     setIsAuthenticated(true);
-    setUserProfile(prev => ({ ...prev, username }));
   };
 
   if (!isAuthenticated) {
