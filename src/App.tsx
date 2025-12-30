@@ -97,6 +97,36 @@ function App() {
     joinedDate: new Date().toISOString().split('T')[0]
   });
 
+  // Verificar autenticação ao carregar a página
+  useEffect(() => {
+    const checkAuth = async () => {
+      const token = localStorage.getItem('access_token');
+      if (!token) {
+        setIsAuthenticated(false);
+        return;
+      }
+
+      try {
+        // Validar token com o backend
+        const user = await apiService.getCurrentUser();
+        if (user) {
+          setIsAuthenticated(true);
+        } else {
+          // Token inválido ou expirado
+          localStorage.removeItem('access_token');
+          localStorage.removeItem('refresh_token');
+          localStorage.removeItem('user');
+          setIsAuthenticated(false);
+        }
+      } catch (error) {
+        console.error('Erro ao validar token:', error);
+        setIsAuthenticated(false);
+      }
+    };
+
+    checkAuth();
+  }, []);
+
   // Carregar dados do usuário após autenticação
   useEffect(() => {
     if (isAuthenticated) {
