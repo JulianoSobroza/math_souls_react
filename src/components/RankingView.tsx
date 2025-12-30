@@ -1,5 +1,7 @@
 import { ArrowLeft, Trophy, Medal, Award, TrendingUp } from 'lucide-react';
 import { UserProfile } from '../App';
+import { apiService } from '../services/api';
+import { useEffect, useState } from 'react';
 
 type RankingViewProps = {
   currentUser: UserProfile;
@@ -16,8 +18,8 @@ type RankingUser = {
 };
 
 export function RankingView({ currentUser, onBack, onViewProfile }: RankingViewProps) {
-  // Mock data - em produção viria do backend
-  const rankingData: RankingUser[] = [
+  // Mock data - fallback para quando API não tem dados
+  const mockRankingData: RankingUser[] = [
     { rank: 1, username: 'MathGenius', weeklyXP: 2450, level: 24, badge: '🥇' },
     { rank: 2, username: 'AlgebraKing', weeklyXP: 2180, level: 21, badge: '🥈' },
     { rank: 3, username: 'GeometriaPro', weeklyXP: 1920, level: 19, badge: '🥉' },
@@ -29,6 +31,51 @@ export function RankingView({ currentUser, onBack, onViewProfile }: RankingViewP
     { rank: 9, username: 'EquationSolver', weeklyXP: 890, level: 11 },
     { rank: 10, username: 'MathLover99', weeklyXP: 720, level: 10 },
   ];
+
+  const [rankingData, setRankingData] = useState<RankingUser[]>(mockRankingData);
+  const [currentUserRank, setCurrentUserRank] = useState<RankingUser | undefined>();
+  const [loading, setLoading] = useState(true);
+  const [isUsingMockData, setIsUsingMockData] = useState(false);
+
+  useEffect(() => {
+    const fetchRanking = async () => {
+      try {
+        setLoading(true);
+        const response = await apiService.getWeeklyRanking(10);
+        
+        if (response && response.rankings && response.rankings.length > 0) {
+          const mappedData: RankingUser[] = response.rankings.map((ranking: any) => ({
+            rank: ranking.position,
+            username: ranking.user.name,
+            weeklyXP: ranking.xp_earned_this_week,
+            level: ranking.level,
+          }));
+
+          setRankingData(mappedData);
+          const userRank = mappedData.find(u => u.username === currentUser.username);
+          setCurrentUserRank(userRank);
+          setIsUsingMockData(false);
+        } else {
+          // Usar mock data como fallback
+          setRankingData(mockRankingData);
+          const userRank = mockRankingData.find(u => u.username === currentUser.username);
+          setCurrentUserRank(userRank);
+          setIsUsingMockData(true);
+        }
+      } catch (err) {
+        console.error('Failed to fetch ranking:', err);
+        // Em caso de erro, usar mock data
+        setRankingData(mockRankingData);
+        const userRank = mockRankingData.find(u => u.username === currentUser.username);
+        setCurrentUserRank(userRank);
+        setIsUsingMockData(true);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchRanking();
+  }, [currentUser.username]);
 
   const getRankIcon = (rank: number) => {
     switch (rank) {
@@ -43,8 +90,15 @@ export function RankingView({ currentUser, onBack, onViewProfile }: RankingViewP
     }
   };
 
-  const currentUserRank = rankingData.find(u => u.username === currentUser.username);
   const daysUntilReset = 7 - new Date().getDay();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen p-6 flex items-center justify-center">
+        <div className="text-slate-400">Carregando ranking...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen p-6">
@@ -61,6 +115,12 @@ export function RankingView({ currentUser, onBack, onViewProfile }: RankingViewP
           <div className="text-slate-500">Reseta em {daysUntilReset} dias</div>
         </div>
       </div>
+
+      {isUsingMockData && (
+        <div className="bg-amber-900/20 border border-amber-700 p-3 rounded-lg text-amber-400 mb-4 text-sm">
+          ℹ️ Usando dados de exemplo (API indisponível no momento)
+        </div>
+      )}
 
       {/* User's Position */}
       <div className="bg-gradient-to-br from-blue-600 to-purple-600 rounded-xl p-5 mb-6">

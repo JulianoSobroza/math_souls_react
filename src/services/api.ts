@@ -86,6 +86,28 @@ class APIService {
       return null;
     }
   }
+
+  async getWeeklyRanking(limit: number = 10): Promise<any | null> {
+    try {
+      const response = await fetch(`${API_BASE_URL}/rankings/weekly?limit=${limit}`, {
+        method: 'GET',
+        headers: this.getAuthHeader(),
+      });
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          localStorage.removeItem('access_token');
+          return null;
+        }
+        throw new Error('Failed to fetch weekly ranking');
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('Error fetching weekly ranking:', error);
+      return null;
+    }
+  }
 }
 
 export const apiService = new APIService();
